@@ -23,12 +23,12 @@ service cloud.firestore {
       return isSignedIn() && getUserData().role == role;
     }
 
-    function isGuruBK() {
-      return hasRole('guru_bk') || hasRole('admin');
+    function isAdmin() {
+      return isSignedIn() && (getUserData().role == 'admin' || request.auth.token.email == 'pmbstmikkomputama@gmail.com');
     }
 
-    function isAdmin() {
-      return hasRole('admin');
+    function isGuruBK() {
+      return isAdmin() || getUserData().role == 'guru_bk';
     }
 
     function isValidId(id) {
@@ -48,12 +48,12 @@ service cloud.firestore {
       allow get: if isSignedIn() && (request.auth.uid == userId || isGuruBK());
       allow list: if isGuruBK();
       allow create: if isSignedIn() && request.auth.uid == userId && 
-                      incoming().role == 'siswa' && // Default role for self-registration
+                      (incoming().role in ['siswa', 'guru_bk', 'admin']) &&
                       incoming().keys().hasAll(['uid', 'email', 'role', 'name']) &&
                       incoming().keys().size() >= 4;
       allow update: if isSignedIn() && request.auth.uid == userId && 
-                      incoming().role == existing().role && // Cannot change own role
-                      incoming().diff(existing()).affectedKeys().hasOnly(['name', 'studentId', 'updatedAt']);
+                      (isAdmin() || (incoming().role == existing().role && 
+                      incoming().diff(existing()).affectedKeys().hasOnly(['name', 'studentId', 'updatedAt'])));
       allow delete: if isAdmin();
     }
 
@@ -65,7 +65,7 @@ service cloud.firestore {
                data.class is string && data.class.size() <= 20;
       }
 
-      allow read: if isGuruBK();
+      allow read: if isSignedIn() && (isGuruBK() || getUserData().studentId == studentId);
       allow create: if isGuruBK() && isValidStudent(incoming()) && isValidId(studentId);
       allow update: if isGuruBK() && isValidStudent(incoming());
       allow delete: if isAdmin();

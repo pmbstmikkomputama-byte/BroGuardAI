@@ -99,14 +99,18 @@ export async function saveAssessment(assessment: StudentAssessment): Promise<str
       timestamp: Timestamp.now()
     });
     
-    // Update student's last assessment
-    await setDoc(doc(db, 'students', assessment.studentId), {
-      lastAssessmentDate: new Date().toISOString(),
-      overallRisk: assessment.aiAnalysis?.riskLevel || RiskLevel.LOW,
-      attendance: assessment.behavioralData.attendance,
-      gradesTrend: assessment.behavioralData.grades_trend,
-      socialScore: assessment.behavioralData.social_interaction
-    }, { merge: true });
+    // Update student's last assessment (only if guru_bk or if we allow limited student update)
+    try {
+      await setDoc(doc(db, 'students', assessment.studentId), {
+        lastAssessmentDate: new Date().toISOString(),
+        overallRisk: assessment.aiAnalysis?.riskLevel || RiskLevel.LOW,
+        attendance: assessment.behavioralData.attendance,
+        gradesTrend: assessment.behavioralData.grades_trend,
+        socialScore: assessment.behavioralData.social_interaction
+      }, { merge: true });
+    } catch (studentUpdateError) {
+      console.warn("Could not update student dashboard record directly. This is expected for student accounts.", studentUpdateError);
+    }
 
     return docRef.id;
   } catch (error) {
