@@ -10,13 +10,13 @@ let ai: GoogleGenAI | null = null;
 
 function getAI() {
   if (!ai) {
-    // Fokus pada VITE_ prefix untuk browser/Vercel client-side
-    const metaEnv = (import.meta as any).env;
-    const key = metaEnv?.VITE_GEMINI_API_KEY;
+    // Ambil dari import.meta.env (Vite)
+    const env = (import.meta as any).env;
+    const key = env?.VITE_GEMINI_API_KEY || env?.GEMINI_API_KEY;
     
     if (!key) {
-      console.error("Debug AI Key: VITE_GEMINI_API_KEY is undefined");
-      throw new Error("PENTING: Perubahan kode baru belum ter-update di Vercel. 1. Anda WAJIB push perubahan terbaru dari AI Studio ke GitHub. 2. Pastikan di Vercel Dashboard sudah ada variabel VITE_GEMINI_API_KEY. 3. WAJIB lakukan REDEPLOY manual di Vercel Dashboard agar API Key masuk ke dalam build.");
+      console.error("VITE_GEMINI_API_KEY is missing!");
+      throw new Error("KONFIGURASI DIBUTUHKAN: 1. Tambahkan VITE_GEMINI_API_KEY di Vercel. 2. PUSH kode ini ke GitHub. 3. REDEPLOY manual di Vercel Dashboard.");
     }
     ai = new GoogleGenAI({ apiKey: key });
   }

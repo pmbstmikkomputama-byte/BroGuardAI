@@ -75,14 +75,14 @@ service cloud.firestore {
     match /assessments/{assessmentId} {
       function isValidAssessment(data) {
         return data.studentId is string && isValidId(data.studentId) &&
-               data.timestamp is string &&
+               (data.timestamp is string || data.timestamp is timestamp) &&
                data.responses is list && data.responses.size() <= 50;
       }
 
-      allow get: if isGuruBK();
-      allow list: if isGuruBK() && (resource.data.studentId != null); 
+      allow get: if isSignedIn() && (isGuruBK() || (hasRole('siswa') && getUserData().studentId == resource.data.studentId));
+      allow list: if isSignedIn() && (isGuruBK() || (hasRole('siswa') && getUserData().studentId == resource.data.studentId)); 
       allow create: if isSignedIn() && isValidAssessment(incoming()) && 
-                      (isGuruBK() || (hasRole('siswa') && getUserData().studentId == incoming().studentId && exists(/databases/$(database)/documents/students/$(incoming().studentId))));
+                      (isGuruBK() || (hasRole('siswa') && getUserData().studentId == incoming().studentId));
       allow update: if isGuruBK() && 
                       incoming().diff(existing()).affectedKeys().hasOnly(['aiAnalysis', 'status', 'updatedAt']);
       allow delete: if isAdmin();

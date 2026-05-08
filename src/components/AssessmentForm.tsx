@@ -44,6 +44,43 @@ export default function AssessmentForm({ questions, isSelfReport = false }: Asse
     setLoading(true);
     
     try {
+      // Check if user is in demo mode (not logged in via Firebase Auth)
+      const isDemo = formData.studentId.startsWith("demo-") || !localStorage.getItem("firebaseToken") && !isSelfReport;
+      
+      if (isDemo) {
+        // Prepare assessment data for local preview
+        const assessmentData: Partial<StudentAssessment> = {
+          studentName: formData.studentName,
+          studentId: formData.studentId,
+          timestamp: new Date().toISOString(),
+          behavioralData: isSelfReport ? {
+            attendance: 100,
+            grades_trend: 'stable',
+            social_interaction: 5
+          } : {
+            attendance: formData.attendance,
+            grades_trend: formData.grades,
+            social_interaction: formData.social
+          },
+          responses: questions.map(q => ({
+            question: q.text,
+            answer: answers[q.id] || ""
+          }))
+        };
+
+        const analysis = await analyzeStudentRisk(assessmentData);
+        const fullAssessment: StudentAssessment = { ...assessmentData, id: "demo-id", aiAnalysis: analysis } as StudentAssessment;
+        
+        if (isSelfReport) {
+          setSubmitted(true);
+        } else {
+          setResult(fullAssessment);
+        }
+        
+        alert("INFO: Analisis berhasil dijalankan (Mode Demo). Data ini tidak disimpan ke database permanen karena Anda menggunakan akun percobaan. Gunakan Login Google untuk menyimpan data.");
+        return;
+      }
+
       // Prepare assessment data
       const assessmentData: Partial<StudentAssessment> = {
         studentName: formData.studentName,
