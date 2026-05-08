@@ -15,8 +15,8 @@ function getAI() {
     const key = metaEnv?.VITE_GEMINI_API_KEY;
     
     if (!key) {
-      console.error("Debug AI Key: Environment variables tidak ditemukan di client-side build.");
-      throw new Error("VERSI TERBARU: VITE_GEMINI_API_KEY tidak ditemukan. 1. Pastikan di Vercel namanya adalah VITE_GEMINI_API_KEY. 2. WAJIB REDEPLOY DI VERCEL agar perubahan terbaca.");
+      console.error("Debug AI Key: VITE_GEMINI_API_KEY is undefined");
+      throw new Error("PENTING: Perubahan kode baru belum ter-update di Vercel. 1. Anda WAJIB push perubahan terbaru dari AI Studio ke GitHub. 2. Pastikan di Vercel Dashboard sudah ada variabel VITE_GEMINI_API_KEY. 3. WAJIB lakukan REDEPLOY manual di Vercel Dashboard agar API Key masuk ke dalam build.");
     }
     ai = new GoogleGenAI({ apiKey: key });
   }
