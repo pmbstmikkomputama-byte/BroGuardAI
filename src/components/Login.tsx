@@ -40,15 +40,19 @@ export default function Login({ onLogin }: LoginProps) {
       let profile = await getUserProfile(user.uid);
       
       if (!profile) {
-        // Default new users to Guru BK for this demo, or ask them later.
-        // Usually, in a real app, you'd have an onboarding or invite system.
+        // Super Admin enforcement
+        const isAdmin = user.email === 'pmbstmikkomputama@gmail.com';
+        
         profile = {
           uid: user.uid,
           email: user.email || "",
-          role: UserRole.GURU_BK, // Default fallback
+          role: isAdmin ? UserRole.ADMIN : UserRole.GURU_BK,
           name: user.displayName || "User"
         };
         await createUserProfile(profile);
+      } else if (user.email === 'pmbstmikkomputama@gmail.com' && profile.role !== UserRole.ADMIN) {
+        // Ensure super admin always has admin role even if it changed in DB
+        profile.role = UserRole.ADMIN;
       }
       
       onLogin(profile);

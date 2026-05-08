@@ -4,30 +4,54 @@
  */
 
 import { useState } from "react";
-import { Plus, Trash2, Save, HelpCircle, BrainCircuit, Loader2 } from "lucide-react";
+import { Plus, Trash2, Save, HelpCircle, BrainCircuit, Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
 import { Question } from "../types";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { generateQuestions } from "../services/aiService";
+import { cn } from "../lib/utils";
 
 interface QuestionnaireManagerProps {
   questions: Question[];
   setQuestions: (questions: Question[]) => void;
 }
 
+const DEFAULT_QUESTIONS_IDS = ['1', '2', '3', '4', '5'];
+
 export default function QuestionnaireManager({ questions, setQuestions }: QuestionnaireManagerProps) {
   const [newQuestion, setNewQuestion] = useState("");
   const [generating, setGenerating] = useState(false);
+  const [aiStatus, setAiStatus] = useState<{ type: 'error' | 'success', msg: string } | null>(null);
 
   const handleAIDeploy = async () => {
     setGenerating(true);
+    setAiStatus(null);
     try {
       const aiQuestions = await generateQuestions();
+      
+      // Check if it returned defaults (fallback)
+      const isFallback = aiQuestions.length > 0 && DEFAULT_QUESTIONS_IDS.includes(aiQuestions[0].id);
+      
+      if (isFallback) {
+        setAiStatus({ 
+          type: 'error', 
+          msg: "Kuota AI penuh. BroGuardAI menggunakan set pertanyaan standar (safety fallback) agar sistem tetap berjalan." 
+        });
+      } else {
+        setAiStatus({ 
+          type: 'success', 
+          msg: "BroGuardAI berhasil menghasilkan kuesioner baru yang relevan!" 
+        });
+      }
+      
       if (aiQuestions.length > 0) {
         setQuestions(aiQuestions);
       }
     } catch (error: any) {
       console.error("Error generating questions:", error);
-      alert(error.message || "Gagal menghasilkan kuesioner AI. Silakan periksa koneksi internet atau API Key Anda.");
+      setAiStatus({ 
+        type: 'error', 
+        msg: "Gagal menghubungkan ke mesin AI. Silakan periksa kunci API Anda." 
+      });
     } finally {
       setGenerating(false);
     }
@@ -63,6 +87,29 @@ export default function QuestionnaireManager({ questions, setQuestions }: Questi
           Generate 30 Pertanyaan AI
         </button>
       </header>
+
+      <AnimatePresence>
+        {aiStatus && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className={cn(
+              "p-6 rounded-3xl border flex gap-4 items-center",
+              aiStatus.type === 'success' ? "bg-emerald-50 border-emerald-100 text-emerald-700" : "bg-tan-50 border-tan-100 text-tan-700"
+            )}
+          >
+            <div className={cn(
+              "p-3 rounded-2xl shadow-sm bg-white",
+              aiStatus.type === 'success' ? "text-emerald-500" : "text-tan-500"
+            )}>
+              {aiStatus.type === 'success' ? <CheckCircle2 size={24} /> : <AlertTriangle size={24} />}
+            </div>
+            <p className="text-sm font-sans italic flex-1">{aiStatus.msg}</p>
+            <button onClick={() => setAiStatus(null)}>✕</button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="bg-white p-10 rounded-[40px] border border-natural-border shadow-sm space-y-8">
         <div className="space-y-4">

@@ -29,6 +29,7 @@ export default function AssessmentForm({ questions, isSelfReport = false }: Asse
   
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
+  const [errorBanner, setErrorBanner] = useState<string | null>(null);
 
   // Initialize answers when questions change
   useEffect(() => {
@@ -42,6 +43,7 @@ export default function AssessmentForm({ questions, isSelfReport = false }: Asse
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setErrorBanner(null);
     
     try {
       // Check if user is in demo mode (not logged in via Firebase Auth)
@@ -103,8 +105,8 @@ export default function AssessmentForm({ questions, isSelfReport = false }: Asse
       
       const analysis = await analyzeStudentRisk(assessmentData);
       
-      if (analysis.summary.includes("Gagal menganalisis")) {
-        throw new Error(analysis.summary);
+      if (analysis.summary.includes("Batas penggunaan AI") || analysis.summary.includes("Konfigurasi AI tidak ditemukan")) {
+        setErrorBanner(analysis.summary);
       }
       
       const fullAssessment: StudentAssessment = {
@@ -141,7 +143,7 @@ export default function AssessmentForm({ questions, isSelfReport = false }: Asse
         if (error.message) errorMessage = `Kesalahan: ${error.message}`;
       }
       
-      alert(errorMessage);
+      setErrorBanner(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -198,6 +200,31 @@ export default function AssessmentForm({ questions, isSelfReport = false }: Asse
             : "Masukkan data perilaku dan kuesioner siswa untuk dianalisis oleh BroGuardAI."}
         </p>
       </header>
+
+      <AnimatePresence>
+        {errorBanner && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="mb-8 p-6 bg-red-50 border border-red-100 rounded-3xl flex gap-4 items-center"
+          >
+            <div className="p-3 bg-white rounded-2xl shadow-sm text-red-500">
+              <AlertTriangle size={24} />
+            </div>
+            <div className="flex-1">
+              <h4 className="text-[10px] font-bold text-red-700 uppercase tracking-widest mb-1">Masalah Terdeteksi</h4>
+              <p className="text-sm text-red-600/80 font-sans italic">{errorBanner}</p>
+            </div>
+            <button 
+              onClick={() => setErrorBanner(null)}
+              className="text-red-400 hover:text-red-600 transition-colors"
+            >
+              ✕
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 md:gap-10">
         {/* Form Container */}

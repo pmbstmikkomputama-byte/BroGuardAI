@@ -143,19 +143,25 @@ export default function Settings() {
                         </td>
                         <td className="px-6 md:px-8 py-6">
                           <div className="flex items-center gap-3">
-                            <select 
-                              value={u.role}
-                              disabled={updatingId === u.uid}
-                              onChange={(e) => handleRoleChange(u.uid, e.target.value as UserRole)}
-                              className={cn(
-                                "bg-[#FBFBFA] border border-natural-border rounded-xl px-3 md:px-4 py-2 text-[10px] font-bold uppercase tracking-widest outline-none focus:ring-1 focus:ring-natural-accent cursor-pointer",
-                                u.role === UserRole.ADMIN ? "text-natural-tan" : u.role === UserRole.GURU_BK ? "text-natural-accent" : "text-emerald-600"
-                              )}
-                            >
-                              <option value={UserRole.ADMIN}>Admin</option>
-                              <option value={UserRole.GURU_BK}>Guru BK</option>
-                              <option value={UserRole.SISWA}>Siswa</option>
-                            </select>
+                            {u.email === 'pmbstmikkomputama@gmail.com' ? (
+                              <div className="bg-natural-accent text-white px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-sm border border-natural-accent">
+                                Master Administrator
+                              </div>
+                            ) : (
+                              <select 
+                                value={u.role}
+                                disabled={updatingId === u.uid}
+                                onChange={(e) => handleRoleChange(u.uid, e.target.value as UserRole)}
+                                className={cn(
+                                  "bg-[#FBFBFA] border border-natural-border rounded-xl px-3 md:px-4 py-2 text-[10px] font-bold uppercase tracking-widest outline-none focus:ring-1 focus:ring-natural-accent cursor-pointer",
+                                  u.role === UserRole.ADMIN ? "text-natural-tan" : u.role === UserRole.GURU_BK ? "text-natural-accent" : "text-emerald-600"
+                                )}
+                              >
+                                <option value={UserRole.ADMIN}>Admin</option>
+                                <option value={UserRole.GURU_BK}>Guru BK</option>
+                                <option value={UserRole.SISWA}>Siswa</option>
+                              </select>
+                            )}
                           </div>
                         </td>
                         <td className="px-6 md:px-8 py-6">
