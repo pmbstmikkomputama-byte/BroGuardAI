@@ -10,11 +10,13 @@ let ai: GoogleGenAI | null = null;
 
 function getAI() {
   if (!ai) {
-    // Mencoba mengambil dari VITE_ prefix (Vite standard) atau process.env
-    const key = (import.meta as any).env?.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+    // Fokus pada VITE_ prefix untuk browser/Vercel client-side
+    const metaEnv = (import.meta as any).env;
+    const key = metaEnv?.VITE_GEMINI_API_KEY;
     
     if (!key) {
-      throw new Error("GEMINI_API_KEY tidak ditemukan. Pastikan Anda sudah menambahkan VITE_GEMINI_API_KEY di Environment Variables Vercel Anda.");
+      console.error("Debug AI Key: Environment variables tidak ditemukan di client-side build.");
+      throw new Error("VERSI TERBARU: VITE_GEMINI_API_KEY tidak ditemukan. 1. Pastikan di Vercel namanya adalah VITE_GEMINI_API_KEY. 2. WAJIB REDEPLOY DI VERCEL agar perubahan terbaca.");
     }
     ai = new GoogleGenAI({ apiKey: key });
   }
