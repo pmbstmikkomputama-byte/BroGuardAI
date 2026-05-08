@@ -10,10 +10,11 @@ let ai: GoogleGenAI | null = null;
 
 function getAI() {
   if (!ai) {
-    const key = process.env.GEMINI_API_KEY;
+    // Mencoba mengambil dari VITE_ prefix (Vite standard) atau process.env
+    const key = (import.meta as any).env?.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
     
     if (!key) {
-      throw new Error("GEMINI_API_KEY tidak ditemukan. Pastikan sudah menambahkan GEMINI_API_KEY di Environment Variables Anda.");
+      throw new Error("GEMINI_API_KEY tidak ditemukan. Pastikan Anda sudah menambahkan VITE_GEMINI_API_KEY di Environment Variables Vercel Anda.");
     }
     ai = new GoogleGenAI({ apiKey: key });
   }
