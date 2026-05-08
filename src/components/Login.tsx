@@ -55,16 +55,16 @@ export default function Login({ onLogin }: LoginProps) {
     } catch (err: any) {
       console.error("Google Login Error:", err);
       
-      let msg = "Gagal masuk dengan Google. Silakan coba lagi.";
+      let msg = "Gagal login. Pastikan domain 'broguardai.vercel.app' sudah didaftarkan di Firebase Console.";
       
       if (err.code === "auth/popup-blocked") {
-        msg = "PENTING: Browser Anda memblokir jendela login. Silakan aktifkan popup di pengaturan browser Anda (icon gembok/setelan di address bar).";
+        msg = "Popup login diblokir! Izinkan popup di pengaturan browser Anda (cek ikon gembok di address bar).";
       } else if (err.code === "auth/unauthorized-domain") {
-        msg = "ERROR DOMAIN: Domain ini belum didaftarkan di Firebase Console. Tambahkan 'broguardai.vercel.app' ke 'Authorized Domains' di Firebase Authentication Settings.";
-      } else if (err.code === "auth/internal-error") {
-        msg = "Kesalahan internal Firebase. Periksa koneksi internet Anda.";
+        msg = "DOMAIN BELUM TERDAFTAR: Anda HARUS menambahkan 'broguardai.vercel.app' ke 'Authorized Domains' di Firebase Console (Authentication > Settings).";
+      } else if (err.code === "auth/operation-not-allowed") {
+        msg = "GOOGLE LOGIN NONAKTIF: Aktifkan metode login Google di Firebase Console (Authentication > Sign-in method).";
       } else if (err.message) {
-        msg = `Kesalahan: ${err.message}`;
+        msg = `Gagal: ${err.message}`;
       }
       
       setError(msg);
