@@ -66,6 +66,10 @@ export default function AssessmentForm({ questions, isSelfReport = false }: Asse
       
       const analysis = await analyzeStudentRisk(assessmentData);
       
+      if (analysis.summary.includes("Gagal menganalisis")) {
+        throw new Error(analysis.summary);
+      }
+      
       const fullAssessment: StudentAssessment = {
         ...assessmentData,
         id: "", // Will be assigned by Firestore

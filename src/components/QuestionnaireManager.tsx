@@ -25,6 +25,9 @@ export default function QuestionnaireManager({ questions, setQuestions }: Questi
       if (aiQuestions.length > 0) {
         setQuestions(aiQuestions);
       }
+    } catch (error: any) {
+      console.error("Error generating questions:", error);
+      alert(error.message || "Gagal menghasilkan kuesioner AI. Silakan periksa koneksi internet atau API Key Anda.");
     } finally {
       setGenerating(false);
     }

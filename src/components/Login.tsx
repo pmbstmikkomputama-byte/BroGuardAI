@@ -19,31 +19,15 @@ export default function Login({ onLogin }: LoginProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleDemoLogin = async (role: UserRole) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const { signInAnonymously } = await import('firebase/auth');
-      const { auth } = await import('../lib/firebase');
-      const result = await signInAnonymously(auth);
-      const user = result.user;
-
-      const demoUser: UserProfile = {
-        uid: user.uid,
-        email: `${role}-${user.uid.slice(0, 5)}@demo.broguard.ai`,
-        role: role,
-        name: `Demo ${role === UserRole.ADMIN ? 'Administrator' : role === UserRole.GURU_BK ? 'Guru BK' : 'Siswa'}`,
-        studentId: role === UserRole.SISWA ? 'S1' : undefined
-      };
-
-      await createUserProfile(demoUser);
-      onLogin(demoUser);
-    } catch (err: any) {
-      console.error(err);
-      setError("Gagal masuk mode demo. Silakan coba lagi.");
-    } finally {
-      setLoading(false);
-    }
+  const handleDemoLogin = (role: UserRole) => {
+    const demoUser: UserProfile = {
+      uid: `demo-${role}`,
+      email: `${role}@demo.broguard.ai`,
+      role: role,
+      name: `Demo ${role === UserRole.ADMIN ? 'Administrator' : role === UserRole.GURU_BK ? 'Guru BK' : 'Siswa'}`,
+      studentId: role === UserRole.SISWA ? 'S1' : undefined
+    };
+    onLogin(demoUser);
   };
 
   const handleGoogleLogin = async () => {

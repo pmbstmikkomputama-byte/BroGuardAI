@@ -24,11 +24,11 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isSignedIn() && (getUserData().role == 'admin' || request.auth.token.email == 'pmbstmikkomputama@gmail.com');
+      return isSignedIn() && (request.auth.token.email == 'pmbstmikkomputama@gmail.com' || (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserData().role == 'admin'));
     }
 
     function isGuruBK() {
-      return isAdmin() || getUserData().role == 'guru_bk';
+      return isAdmin() || (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserData().role == 'guru_bk');
     }
 
     function isValidId(id) {
@@ -65,7 +65,7 @@ service cloud.firestore {
                data.class is string && data.class.size() <= 20;
       }
 
-      allow read: if isSignedIn() && (isGuruBK() || getUserData().studentId == studentId);
+      allow read: if true; // Public read allowed for demo purposes. NOTE: Should be restricted in production.
       allow create: if isGuruBK() && isValidStudent(incoming()) && isValidId(studentId);
       allow update: if isGuruBK() && isValidStudent(incoming());
       allow delete: if isAdmin();
@@ -91,7 +91,7 @@ service cloud.firestore {
 
     // 4. Questions Collection
     match /questions/{questionId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if isGuruBK();
     }
   }

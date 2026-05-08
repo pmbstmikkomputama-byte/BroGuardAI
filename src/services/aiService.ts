@@ -10,11 +10,10 @@ let ai: GoogleGenAI | null = null;
 
 function getAI() {
   if (!ai) {
-    // Mencoba mengambil dari env variabel (mendukung Vite/Vite-based platforms seperti Vercel)
-    const key = (import.meta as any).env?.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+    const key = process.env.GEMINI_API_KEY;
     
     if (!key) {
-      throw new Error("GEMINI_API_KEY tidak ditemukan. Jika deploy di Vercel, pastikan sudah menambahkan VITE_GEMINI_API_KEY di Environment Variables.");
+      throw new Error("GEMINI_API_KEY tidak ditemukan. Pastikan sudah menambahkan GEMINI_API_KEY di Environment Variables Anda.");
     }
     ai = new GoogleGenAI({ apiKey: key });
   }
@@ -114,10 +113,10 @@ export async function analyzeStudentRisk(assessment: Partial<StudentAssessment>)
 }
 
 export async function generateQuestions() {
-  const prompt = `Hasilkan 30 pertanyaan yang relevan secara psikologis untuk penilaian risiko siswa dalam Bahasa Indonesia.
+  const prompt = `Hasilkan 25 pertanyaan yang relevan secara psikologis untuk penilaian risiko siswa dalam Bahasa Indonesia.
   Pertanyaan harus mencakup berbagai domain: Kesejahteraan emosional, interaksi sosial, dinamika keluarga, dan tekanan akademik.
   Pastikan nadanya mendukung, empati, dan sesuai untuk siswa (tingkat SMP/SMA).
-  Berikan output sebagai array string JSON.`;
+  Berikan output sebagai array string JSON. Contoh: ["Pertanyaan 1", "Pertanyaan 2"]`;
 
   try {
     const client = getAI();
@@ -129,21 +128,27 @@ export async function generateQuestions() {
         responseSchema: {
           type: Type.ARRAY,
           items: { type: Type.STRING },
-          description: "Daftar 30 pertanyaan penilaian dalam Bahasa Indonesia"
+          description: "Daftar 25 pertanyaan penilaian dalam Bahasa Indonesia"
         }
       }
     });
 
     const text = response.text;
-    if (!text) throw new Error("Respon kosong");
-    const jsonStr = text.replace(/```json\n?|```/g, "").trim();
-    const texts = JSON.parse(jsonStr) as string[];
-    return texts.map(text => ({
-      id: Math.random().toString(36).substr(2, 9),
-      text
-    })) as Question[];
+    if (!text) throw new Error("AI mengembalikan respon kosong");
+    
+    try {
+      const jsonStr = text.replace(/```json\n?|```/g, "").trim();
+      const texts = JSON.parse(jsonStr) as string[];
+      return texts.map(text => ({
+        id: Math.random().toString(36).substr(2, 9),
+        text
+      })) as Question[];
+    } catch (parseErr) {
+      console.error("Gagal parse kuesioner JSON:", text);
+      throw new Error("Format data kuesioner AI tidak valid.");
+    }
   } catch (e) {
     console.error("Gagal menghasilkan kuesioner AI:", e);
-    return [];
+    throw e; // Rethrow to be caught by UI
   }
 }
