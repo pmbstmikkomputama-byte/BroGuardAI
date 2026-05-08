@@ -84,9 +84,27 @@ export default function AssessmentForm({ questions, isSelfReport = false }: Asse
       } else {
         setResult(fullAssessment);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Gagal menyimpan asesmen:", error);
-      alert("Terjadi kesalahan saat menyimpan data. Silakan coba lagi.");
+      
+      let errorMessage = "Terjadi kesalahan saat menyimpan data. Silakan coba lagi.";
+      
+      try {
+        // Try to parse detailed error info from dbService
+        const errorInfo = JSON.parse(error.message);
+        if (errorInfo.operationType === 'write') {
+          if (errorInfo.error.includes("permission-denied") || errorInfo.error.includes("insufficient permissions")) {
+            errorMessage = "Gagal menyimpan: Izin ditolak. Pastikan data siswa (ID) sudah terdaftar di database atau Anda memiliki akses Guru BK.";
+          } else {
+            errorMessage = `Gagal menyimpan data ke Firestore: ${errorInfo.error}`;
+          }
+        }
+      } catch (e) {
+        // Not a JSON error message, or different format
+        if (error.message) errorMessage = `Kesalahan: ${error.message}`;
+      }
+      
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }

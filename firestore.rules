@@ -82,8 +82,7 @@ service cloud.firestore {
       allow get: if isGuruBK();
       allow list: if isGuruBK() && (resource.data.studentId != null); 
       allow create: if isSignedIn() && isValidAssessment(incoming()) && 
-                      (isGuruBK() || (hasRole('siswa') && getUserData().studentId == incoming().studentId)) &&
-                      exists(/databases/$(database)/documents/students/$(incoming().studentId));
+                      (isGuruBK() || (hasRole('siswa') && getUserData().studentId == incoming().studentId && exists(/databases/$(database)/documents/students/$(incoming().studentId))));
       allow update: if isGuruBK() && 
                       incoming().diff(existing()).affectedKeys().hasOnly(['aiAnalysis', 'status', 'updatedAt']);
       allow delete: if isAdmin();
