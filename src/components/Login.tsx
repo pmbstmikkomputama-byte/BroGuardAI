@@ -53,8 +53,21 @@ export default function Login({ onLogin }: LoginProps) {
       
       onLogin(profile);
     } catch (err: any) {
-      console.error(err);
-      setError("Gagal masuk dengan Google. Silakan coba lagi.");
+      console.error("Google Login Error:", err);
+      
+      let msg = "Gagal masuk dengan Google. Silakan coba lagi.";
+      
+      if (err.code === "auth/popup-blocked") {
+        msg = "PENTING: Browser Anda memblokir jendela login. Silakan aktifkan popup di pengaturan browser Anda (icon gembok/setelan di address bar).";
+      } else if (err.code === "auth/unauthorized-domain") {
+        msg = "ERROR DOMAIN: Domain ini belum didaftarkan di Firebase Console. Tambahkan 'broguardai.vercel.app' ke 'Authorized Domains' di Firebase Authentication Settings.";
+      } else if (err.code === "auth/internal-error") {
+        msg = "Kesalahan internal Firebase. Periksa koneksi internet Anda.";
+      } else if (err.message) {
+        msg = `Kesalahan: ${err.message}`;
+      }
+      
+      setError(msg);
     } finally {
       setLoading(false);
     }

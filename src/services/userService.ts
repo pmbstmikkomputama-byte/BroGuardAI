@@ -4,7 +4,7 @@
  */
 
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { UserRole } from '../types';
 
 export interface UserProfile {
@@ -17,21 +17,29 @@ export interface UserProfile {
 
 export async function getUserProfile(uid: string): Promise<UserProfile | null> {
   const docRef = doc(db, 'users', uid);
-  const docSnap = await getDoc(docRef);
-  
-  if (docSnap.exists()) {
-    return docSnap.data() as UserProfile;
+  try {
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data() as UserProfile;
+    }
+    return null;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.GET, `users/${uid}`);
+    return null; // Will not reach here due to throw in handleFirestoreError
   }
-  return null;
 }
 
 export async function createUserProfile(profile: UserProfile): Promise<void> {
   const docRef = doc(db, 'users', profile.uid);
-  await setDoc(docRef, {
-    ...profile,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
-  });
+  try {
+    await setDoc(docRef, {
+      ...profile,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, `users/${profile.uid}`);
+  }
 }
 
 export async function getAllUsers(): Promise<UserProfile[]> {
