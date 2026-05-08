@@ -1,21 +1,8 @@
 {
   "entities": {
-    "User": {
-      "title": "User Profile",
-      "description": "User account information and roles.",
-      "type": "object",
-      "properties": {
-        "uid": { "type": "string" },
-        "email": { "type": "string", "format": "email" },
-        "role": { "type": "string", "enum": ["admin", "guru_bk", "siswa"] },
-        "name": { "type": "string" },
-        "studentId": { "type": "string", "description": "NISN for students" }
-      },
-      "required": ["uid", "email", "role"]
-    },
     "Student": {
-      "title": "Student Record",
-      "description": "Behavioral and assessment summary for a student.",
+      "title": "Student",
+      "description": "Student profile and current risk status",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
@@ -28,11 +15,11 @@
         "gradesTrend": { "type": "string", "enum": ["improving", "stable", "declining"] },
         "socialScore": { "type": "number" }
       },
-      "required": ["id", "name", "nisn", "class"]
+      "required": ["name", "nisn", "class"]
     },
     "Assessment": {
-      "title": "Risk Assessment",
-      "description": "AI-powered risk assessment record.",
+      "title": "Assessment",
+      "description": "A single psychological assessment for a student",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
@@ -53,35 +40,45 @@
           "type": "object",
           "properties": {
             "attendance": { "type": "number" },
-            "grades_trend": { "type": "string" },
+            "grades_trend": { "type": "string", "enum": ["improving", "stable", "declining"] },
             "social_interaction": { "type": "number" }
           }
         },
         "aiAnalysis": {
           "type": "object",
           "properties": {
-            "riskLevel": { "type": "string" },
+            "riskLevel": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
             "summary": { "type": "string" },
             "recommendations": { "type": "array", "items": { "type": "string" } },
             "factors": { "type": "array", "items": { "type": "string" } }
           }
         }
       },
-      "required": ["studentId", "timestamp"]
+      "required": ["studentId", "timestamp", "responses", "behavioralData"]
+    },
+    "Question": {
+      "title": "Question",
+      "description": "A questionnaire question",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "text": { "type": "string" }
+      },
+      "required": ["text"]
     }
   },
   "firestore": {
-    "users": {
-      "schema": "User",
-      "description": "Collection of user profiles."
-    },
-    "students": {
+    "/students/{studentId}": {
       "schema": "Student",
-      "description": "Collection of student academic and behavioral data."
+      "description": "Student records"
     },
-    "assessments": {
+    "/assessments/{assessmentId}": {
       "schema": "Assessment",
-      "description": "Collection of submitted assessments and AI evaluations."
+      "description": "Assessment records"
+    },
+    "/questions/{questionId}": {
+      "schema": "Question",
+      "description": "Managed questions"
     }
   }
 }

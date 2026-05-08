@@ -14,6 +14,7 @@ import QuestionnaireManager from './components/QuestionnaireManager';
 import StudentDatabase from './components/StudentDatabase';
 import AIAnalytics from './components/AIAnalytics';
 import { generateQuestions } from './services/aiService';
+import { subscribeToStudents } from './services/dbService';
 
 import Login from './components/Login';
 import { UserProfile } from './services/userService';
@@ -26,26 +27,11 @@ const DEFAULT_QUESTIONS: Question[] = [
   { id: '3', text: "Apa tantangan terbesarmu saat ini?" }
 ];
 
-const INITIAL_STUDENTS: Student[] = [
-  { 
-    id: 'S1', name: "Ananda Budi Santoso", nisn: "12345001", class: "XI-A", overallRisk: RiskLevel.CRITICAL,
-    attendance: 65, gradesTrend: 'declining', socialScore: 3
-  },
-  { 
-    id: 'S2', name: "Citra Ayu Lestari", nisn: "12345002", class: "XI-B", overallRisk: RiskLevel.MEDIUM,
-    attendance: 92, gradesTrend: 'stable', socialScore: 7
-  },
-  { 
-    id: 'S3', name: "Dedi Kurniawan", nisn: "12345003", class: "XI-A", overallRisk: RiskLevel.LOW,
-    attendance: 98, gradesTrend: 'improving', socialScore: 9
-  },
-];
-
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [user, setUser] = useState<UserProfile | null>(null);
   const [questions, setQuestions] = useState<Question[]>(DEFAULT_QUESTIONS);
-  const [students, setStudents] = useState<Student[]>(INITIAL_STUDENTS);
+  const [students, setStudents] = useState<Student[]>([]);
   const [isFillingQuestionnaire, setIsFillingQuestionnaire] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -64,6 +50,15 @@ export default function App() {
     };
     loadQuestions();
   }, []);
+
+  useEffect(() => {
+    if (user && user.role !== UserRole.SISWA) {
+      const unsubscribe = subscribeToStudents((updatedStudents) => {
+        setStudents(updatedStudents);
+      });
+      return () => unsubscribe();
+    }
+  }, [user]);
 
   const handleLogin = (userProfile: UserProfile) => {
     setUser(userProfile);
@@ -132,7 +127,7 @@ export default function App() {
             {activeTab === 'dashboard' && <Dashboard students={students} />}
             {activeTab === 'assessment' && <AssessmentForm questions={questions} />}
             {activeTab === 'questionnaire_config' && <QuestionnaireManager questions={questions} setQuestions={setQuestions} />}
-            {activeTab === 'students' && <StudentDatabase students={students} setStudents={setStudents} />}
+            {activeTab === 'students' && <StudentDatabase students={students} />}
             
             {activeTab === 'self_report' && (
               <div className="p-6 md:p-12 max-w-4xl mx-auto space-y-10">

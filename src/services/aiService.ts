@@ -43,9 +43,10 @@ export async function analyzeStudentRisk(assessment: Partial<StudentAssessment>)
   4. Hasilkan rekomendasi yang disesuaikan dan dapat ditindaklanjuti untuk Guru BK. Rekomendasi harus spesifik pada masalah yang diidentifikasi.
   5. Tuliskan faktor risiko utama yang terdeteksi.
 
-  PENTING: Gunakan Bahasa Indonesia yang formal dan suportif.
-  
-  Output harus dalam format JSON sesuai skema yang diberikan.`;
+  PENTING: 
+  - Gunakan Bahasa Indonesia yang formal, empati, dan suportif.
+  - Output WAJIB dalam format JSON murni sesuai skema.
+  - Jangan sertakan teks penjelasan di luar blok JSON.`;
 
   try {
     const client = getAI();
@@ -60,7 +61,7 @@ export async function analyzeStudentRisk(assessment: Partial<StudentAssessment>)
             riskLevel: {
               type: Type.STRING,
               enum: ["low", "medium", "high", "critical"],
-              description: "Tingkat risiko yang dinilai"
+              description: "Tingkat risiko (low/medium/high/critical)"
             },
             summary: {
               type: Type.STRING,
@@ -69,12 +70,12 @@ export async function analyzeStudentRisk(assessment: Partial<StudentAssessment>)
             recommendations: {
               type: Type.ARRAY,
               items: { type: Type.STRING },
-              description: "Langkah-langkah yang direkomendasikan dalam Bahasa Indonesia"
+              description: "Daftar rekomendasi operasional dalam Bahasa Indonesia"
             },
             factors: {
               type: Type.ARRAY,
               items: { type: Type.STRING },
-              description: "Faktor risiko yang ditemukan dalam Bahasa Indonesia"
+              description: "Daftar faktor risiko yang teridentifikasi dalam Bahasa Indonesia"
             }
           },
           required: ["riskLevel", "summary", "recommendations", "factors"]
@@ -83,20 +84,31 @@ export async function analyzeStudentRisk(assessment: Partial<StudentAssessment>)
     });
 
     const text = response.text;
-    if (!text) throw new Error("Kosongnya respon dari AI");
+    if (!text) throw new Error("AI mengembalikan respon kosong.");
     
-    // Robust JSON extraction
-    const jsonStr = text.replace(/```json\n?|```/g, "").trim();
-    return JSON.parse(jsonStr) as NonNullable<StudentAssessment['aiAnalysis']>;
+    try {
+      const cleanJson = text.replace(/```json\n?|```/g, "").trim();
+      const parsed = JSON.parse(cleanJson);
+      
+      if (!parsed.riskLevel || !parsed.summary) {
+        throw new Error("Struktur JSON tidak lengkap.");
+      }
+
+      return parsed as NonNullable<StudentAssessment['aiAnalysis']>;
+    } catch (parseError) {
+      console.error("Gagal melakukan parsing JSON dari AI:", text);
+      throw new Error("Format data AI tidak valid.");
+    }
   } catch (e) {
-    console.error("Gagal memproses analisis AI:", e);
+    console.error("Error pada analyzeStudentRisk:", e);
+    
     return {
       riskLevel: RiskLevel.LOW,
       summary: e instanceof Error && e.message.includes("GEMINI_API_KEY") 
         ? "Konfigurasi AI tidak ditemukan. Silakan periksa API Key."
-        : "Analisis gagal karena kesalahan teknis saat memproses tanggapan.",
-      recommendations: ["Coba analisis lagi nanti"],
-      factors: ["Kesalahan teknis atau konfigurasi"]
+        : `Gagal menganalisis: ${e instanceof Error ? e.message : "Kesalahan teknis"}. Silakan coba lagi.`,
+      recommendations: ["Coba analisis ulang dalam beberapa saat"],
+      factors: ["Kesalahan pemrosesan data AI"]
     };
   }
 }

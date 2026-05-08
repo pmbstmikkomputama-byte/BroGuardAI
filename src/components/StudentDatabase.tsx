@@ -6,13 +6,13 @@
 import { useState, useRef, useMemo } from "react";
 import { Upload, Download, Search, Trash2, UserPlus, Table, CheckCircle2, AlertTriangle, FileText, Users, ArrowUpDown, ChevronUp, ChevronDown, BarChart2 } from "lucide-react";
 import { Student, RiskLevel } from "../types";
+import { saveStudent } from "../services/dbService";
 import Papa from "papaparse";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../lib/utils";
 
 interface StudentDatabaseProps {
   students: Student[];
-  setStudents: (students: Student[]) => void;
 }
 
 type SortConfig = {
@@ -20,7 +20,7 @@ type SortConfig = {
   direction: 'asc' | 'desc';
 } | null;
 
-export default function StudentDatabase({ students, setStudents }: StudentDatabaseProps) {
+export default function StudentDatabase({ students }: StudentDatabaseProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState<'basic' | 'behavioral'>('basic');
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
@@ -34,21 +34,31 @@ export default function StudentDatabase({ students, setStudents }: StudentDataba
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
-      complete: (results) => {
+      complete: async (results) => {
         const newData = results.data as any[];
-        const processedStudents: Student[] = newData.map((row, i) => ({
-          id: Math.random().toString(36).substr(2, 9),
-          name: row.Nama || row.name || `Siswa ${students.length + i + 1}`,
-          nisn: row.NISN || row.nisn || row.id || "0000000",
-          class: row.Kelas || row.class || "N/A",
-          overallRisk: RiskLevel.LOW,
-          attendance: Math.floor(Math.random() * (100 - 60 + 1)) + 60,
-          socialScore: Math.floor(Math.random() * 10) + 1,
-          gradesTrend: ['improving', 'stable', 'declining'][Math.floor(Math.random() * 3)] as any
-        }));
+        let successCount = 0;
+        
+        for (const [i, row] of newData.entries()) {
+          const student: Student = {
+            id: row.NISN || row.nisn || row.id || `S-${Date.now()}-${i}`,
+            name: row.Nama || row.name || `Siswa ${students.length + i + 1}`,
+            nisn: row.NISN || row.nisn || row.id || "0000000",
+            class: row.Kelas || row.class || "N/A",
+            overallRisk: RiskLevel.LOW,
+            attendance: row.attendance ? parseInt(row.attendance) : 100,
+            socialScore: row.socialScore ? parseInt(row.socialScore) : 5,
+            gradesTrend: (row.gradesTrend || 'stable') as any
+          };
+          
+          try {
+            await saveStudent(student);
+            successCount++;
+          } catch (err) {
+            console.error("Gagal simpan siswa:", student.name, err);
+          }
+        }
 
-        setStudents([...students, ...processedStudents]);
-        setImportStatus({ success: processedStudents.length, total: processedStudents.length });
+        setImportStatus({ success: successCount, total: newData.length });
         setTimeout(() => setImportStatus(null), 5000);
       }
     });

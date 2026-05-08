@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { BrainCircuit, Loader2, CheckCircle2, ChevronRight, AlertTriangle, MessageSquare, Users, BarChart, ShieldAlert } from "lucide-react";
 import { analyzeStudentRisk } from "../services/aiService";
+import { saveAssessment } from "../services/dbService";
 import { StudentAssessment, RiskLevel, Question } from "../types";
 import { cn } from "../lib/utils";
 
@@ -42,38 +43,49 @@ export default function AssessmentForm({ questions, isSelfReport = false }: Asse
     e.preventDefault();
     setLoading(true);
     
-    // Prepare assessment data
-    const assessmentData: Partial<StudentAssessment> = {
-      studentName: formData.studentName,
-      studentId: formData.studentId,
-      timestamp: new Date().toISOString(),
-      behavioralData: isSelfReport ? {
-        attendance: 100, // Default for self-report
-        grades_trend: 'stable',
-        social_interaction: 5
-      } : {
-        attendance: formData.attendance,
-        grades_trend: formData.grades,
-        social_interaction: formData.social
-      },
-      responses: questions.map(q => ({
-        question: q.text,
-        answer: answers[q.id] || ""
-      }))
-    };
-    const analysis = await analyzeStudentRisk(assessmentData);
-    
-    if (isSelfReport) {
-      setSubmitted(true);
-    } else {
-      setResult({
+    try {
+      // Prepare assessment data
+      const assessmentData: Partial<StudentAssessment> = {
+        studentName: formData.studentName,
+        studentId: formData.studentId,
+        timestamp: new Date().toISOString(),
+        behavioralData: isSelfReport ? {
+          attendance: 100, // Default for self-report
+          grades_trend: 'stable',
+          social_interaction: 5
+        } : {
+          attendance: formData.attendance,
+          grades_trend: formData.grades,
+          social_interaction: formData.social
+        },
+        responses: questions.map(q => ({
+          question: q.text,
+          answer: answers[q.id] || ""
+        }))
+      };
+      
+      const analysis = await analyzeStudentRisk(assessmentData);
+      
+      const fullAssessment: StudentAssessment = {
         ...assessmentData,
-        id: Math.random().toString(36).substr(2, 9),
+        id: "", // Will be assigned by Firestore
         aiAnalysis: analysis
-      } as StudentAssessment);
+      } as StudentAssessment;
+
+      // Save to Firestore
+      await saveAssessment(fullAssessment);
+      
+      if (isSelfReport) {
+        setSubmitted(true);
+      } else {
+        setResult(fullAssessment);
+      }
+    } catch (error) {
+      console.error("Gagal menyimpan asesmen:", error);
+      alert("Terjadi kesalahan saat menyimpan data. Silakan coba lagi.");
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   const getRiskColor = (level: string) => {
