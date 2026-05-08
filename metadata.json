@@ -1,0 +1,6 @@
+{
+  "name": "BroGuardAI",
+  "description": "Smart student psychological risk detection system using AI and data mining to identify and mitigate mental health challenges in educational environments.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["AI Analysis", "Data Visualization", "Risk Assessment"]
+}

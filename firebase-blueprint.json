@@ -1,0 +1,87 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User account information and roles.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["admin", "guru_bk", "siswa"] },
+        "name": { "type": "string" },
+        "studentId": { "type": "string", "description": "NISN for students" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Student": {
+      "title": "Student Record",
+      "description": "Behavioral and assessment summary for a student.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "nisn": { "type": "string" },
+        "class": { "type": "string" },
+        "lastAssessmentDate": { "type": "string", "format": "date-time" },
+        "overallRisk": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+        "attendance": { "type": "number" },
+        "gradesTrend": { "type": "string", "enum": ["improving", "stable", "declining"] },
+        "socialScore": { "type": "number" }
+      },
+      "required": ["id", "name", "nisn", "class"]
+    },
+    "Assessment": {
+      "title": "Risk Assessment",
+      "description": "AI-powered risk assessment record.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "studentId": { "type": "string" },
+        "studentName": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "responses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "question": { "type": "string" },
+              "answer": { "type": "string" }
+            }
+          }
+        },
+        "behavioralData": {
+          "type": "object",
+          "properties": {
+            "attendance": { "type": "number" },
+            "grades_trend": { "type": "string" },
+            "social_interaction": { "type": "number" }
+          }
+        },
+        "aiAnalysis": {
+          "type": "object",
+          "properties": {
+            "riskLevel": { "type": "string" },
+            "summary": { "type": "string" },
+            "recommendations": { "type": "array", "items": { "type": "string" } },
+            "factors": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      },
+      "required": ["studentId", "timestamp"]
+    }
+  },
+  "firestore": {
+    "users": {
+      "schema": "User",
+      "description": "Collection of user profiles."
+    },
+    "students": {
+      "schema": "Student",
+      "description": "Collection of student academic and behavioral data."
+    },
+    "assessments": {
+      "schema": "Assessment",
+      "description": "Collection of submitted assessments and AI evaluations."
+    }
+  }
+}
